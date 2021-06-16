@@ -16,8 +16,6 @@ import java.util.regex.Pattern;
 
 public class ReadDataController {
 
-    @FXML
-    private ListView<CheckBox> topicListView;
     ObservableList<CheckBox> topicList;
 
     @FXML
@@ -66,7 +64,6 @@ public class ReadDataController {
     @FXML
     public void initialize() {
         topicList = FXCollections.observableArrayList();
-        topicListView.setItems(topicList);
         noTopicSelectedText.setOpacity(0);
         invalidIPText.setOpacity(0);
     }
