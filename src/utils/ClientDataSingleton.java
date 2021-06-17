@@ -1,5 +1,7 @@
 package utils;
 
+import utils.tuples.UserTuple;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +13,8 @@ public class ClientDataSingleton {
     }
 
     private List<String> createdAuctions;
-    private String selfID = "";
+    public String userName = "";
+    public String password = "";
     private String brokerIP = "";
 
     public static ClientDataSingleton getInstance() {
@@ -19,6 +22,11 @@ public class ClientDataSingleton {
             instance = new ClientDataSingleton();
         }
         return instance;
+    }
+
+    public void saveUserDataFromTuple(UserTuple user) {
+        this.userName = user.userID;
+        this.password = user.password;
     }
 
     public void setBrokerIP(String ip) {

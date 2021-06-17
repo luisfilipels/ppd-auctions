@@ -11,12 +11,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import networking.NetworkHandlerSingleton;
+import utils.exceptions.JavaSpaceNotFoundException;
+import utils.exceptions.PasswordIncorrectException;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ReadDataController {
-
-    ObservableList<CheckBox> topicList;
 
     @FXML
     private TextField brokerAddressField;
@@ -25,7 +27,16 @@ public class ReadDataController {
     private Text invalidIPText;
 
     @FXML
-    private Text noTopicSelectedText;
+    private Text wrongPasswordText;
+
+    @FXML
+    private TextField userField;
+
+    @FXML
+    private TextField passwordField;
+
+    @FXML
+    private Text failedConnectionText;
 
     private static final String PATTERN =
             "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
@@ -63,13 +74,27 @@ public class ReadDataController {
 
     @FXML
     public void initialize() {
-        topicList = FXCollections.observableArrayList();
-        noTopicSelectedText.setOpacity(0);
         invalidIPText.setOpacity(0);
+        wrongPasswordText.setOpacity(0);
+        failedConnectionText.setOpacity(0);
     }
 
     @FXML
     public void onConfirmButton(ActionEvent event) {
+
+        String userName = userField.getText().trim();
+        String password = passwordField.getText().trim();
+
+        try {
+            NetworkHandlerSingleton.getInstance().loginUser(userName, password);
+        } catch (PasswordIncorrectException e) {
+            wrongPasswordText.setOpacity(1);
+        } catch (JavaSpaceNotFoundException e) {
+            failedConnectionText.setOpacity(1);
+        }
+        wrongPasswordText.setOpacity(0);
+        failedConnectionText.setOpacity(0);
+
 
         Node source = (Node) event.getSource();
         Stage stage = (Stage) source.getScene().getWindow();

@@ -21,7 +21,7 @@ public class Main extends Application {
         popup.setResizable(false);
         popup.setScene(new Scene(root2, 400, 320));
         popup.show();
-        popup.setAlwaysOnTop(true);
+        //popup.setAlwaysOnTop(true);
         popup.toFront();
     }
 
