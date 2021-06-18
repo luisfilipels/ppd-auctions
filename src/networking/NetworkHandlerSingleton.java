@@ -1,24 +1,26 @@
 package networking;
 
 import main.MainViewController;
-import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.TransactionException;
 import net.jini.space.JavaSpace;
 import utils.ClientDataSingleton;
+import utils.exceptions.AcquireTupleException;
 import utils.exceptions.JavaSpaceNotFoundException;
-import utils.exceptions.PasswordIncorrectException;
+import utils.tuples.AuctionTrackerTuple;
+import utils.tuples.BatchTuple;
 import utils.tuples.UserTuple;
 
-import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class NetworkHandlerSingleton {
 
-    private NetworkHandlerSingleton() { }
-
+    private MainViewController mainViewController;
     private static NetworkHandlerSingleton instance;
     private JavaSpace javaSpace;
+
+    private NetworkHandlerSingleton() { }
 
     public static NetworkHandlerSingleton getInstance() {
         if (instance == null) {
@@ -28,33 +30,24 @@ public class NetworkHandlerSingleton {
     }
 
     public JavaSpace getJavaSpace() {
-        System.out.println(1);
+        if (javaSpace != null) return javaSpace;
         Lookup finder = new Lookup(JavaSpace.class);
-        System.out.println(2);
         return (JavaSpace) finder.getService();
     }
 
-    public UserTuple findUser(UserTuple user) {
-        UserTuple userEntered = null;
+    public UserTuple readUser(UserTuple user) throws AcquireTupleException {
         try {
-            userEntered = (UserTuple) javaSpace.readIfExists(user, null, 1000);
-        } catch (UnusableEntryException e) {
-            e.printStackTrace();
-        } catch (TransactionException e) {
-            e.printStackTrace();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            return (UserTuple) javaSpace.read(user, null, 1000);
+        } catch (Exception e) {
+            throw new AcquireTupleException();
         }
-        return userEntered;
     }
 
-    private void clearUserTuples() {
+    private void _clearUserTuples() {
         UserTuple tuple = null;
         do {
             try {
-                tuple = (UserTuple) javaSpace.take(new UserTuple(null, null), null, 1000);
+                tuple = (UserTuple) javaSpace.take(new UserTuple(), null, 1000);
             } catch (Exception e) {
                 e.printStackTrace();
                 break;
@@ -62,32 +55,66 @@ public class NetworkHandlerSingleton {
         } while (tuple != null);
     }
 
+    public void writeAuctionTracker() throws TransactionException, RemoteException {
+        javaSpace = getJavaSpace();
+        AuctionTrackerTuple auctionTracker = new AuctionTrackerTuple();
+        auctionTracker.auctionList = new ArrayList<>();
+        javaSpace.write(auctionTracker, null, 5 * 1000);
+    }
+
+    public AuctionTrackerTuple takeAuctionTracker() throws Exception{
+        javaSpace = getJavaSpace();
+        return (AuctionTrackerTuple) javaSpace.take(new AuctionTrackerTuple(), null, 5000);
+    }
+
+    private AuctionTrackerTuple readAuctionTracker() {
+        javaSpace = getJavaSpace();
+        try {
+            return (AuctionTrackerTuple) javaSpace.read(new AuctionTrackerTuple(), null, 5000);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean auctionTrackerExists() throws JavaSpaceNotFoundException{
+        javaSpace = getJavaSpace();
+        if (javaSpace == null) throw new JavaSpaceNotFoundException();
+        AuctionTrackerTuple result = readAuctionTracker();
+
+        return result != null;
+    }
+
     public void writeUserTuple(UserTuple user) {
         try {
-            javaSpace.write(user, null, 1000);
+            javaSpace.write(user, null, 1000 * 60);
         } catch (Exception e) {
             System.out.println("Could not save user tuple!");
             e.printStackTrace();
         }
     }
 
-    public void loginUser(String userName, String password)
-            throws PasswordIncorrectException, JavaSpaceNotFoundException {
+    public void writeBatch(String id, String description, String sellerID) throws JavaSpaceNotFoundException, TransactionException, RemoteException {
+        javaSpace = getJavaSpace();
         if (javaSpace == null) {
-            javaSpace = getJavaSpace();
+            throw new JavaSpaceNotFoundException();
         }
+
+        BatchTuple tuple = new BatchTuple(id, description, sellerID);
+        javaSpace.write(tuple, null, 10000);
+    }
+
+    public void loginUser(String userName)
+            throws JavaSpaceNotFoundException, AcquireTupleException {
+        javaSpace = getJavaSpace();
         if (javaSpace == null) {
             throw new JavaSpaceNotFoundException();
         }
 
         UserTuple userEntering = new UserTuple();
         userEntering.userID = userName;
-        UserTuple userEntered = findUser(userEntering);
 
-        if (findUser(new UserTuple()) == null) {
-            System.out.println("Didn't read anything!!!");
-        }
-        // TODO: Find out why nothing is being returned!!!!!!
+        UserTuple userEntered = readUser(userEntering);
 
         if (userEntered != null) {
             // User exists
@@ -95,16 +122,17 @@ public class NetworkHandlerSingleton {
             ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntered);
         } else {
             // User does not exist, so create and proceed
+            userEntering.madeAuctions = new ArrayList<>();
             writeUserTuple(userEntering);
-            UserTuple testTuple = findUser(userEntering);
+            UserTuple testTuple = readUser(userEntering);
             if (testTuple != null) System.out.println("Creating user");
             ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntering);
         }
         //clearUserTuples();
     }
 
-    public void initialize(MainViewController mainViewController) {
-
+    public void setMainController(MainViewController mainViewController) {
+        this.mainViewController = mainViewController;
     }
 
 }

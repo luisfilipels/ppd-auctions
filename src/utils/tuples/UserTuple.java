@@ -8,9 +8,7 @@ import java.util.List;
 public class UserTuple implements Entry {
     public String userID;
 
-    public UserTuple() {}
+    public List<String> madeAuctions;
 
-    public UserTuple(String userID, List<String> createdAuctions) {
-        this.userID = userID;
-    }
+    public UserTuple() {}
 }

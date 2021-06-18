@@ -11,7 +11,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="807.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.MainViewController">
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="807.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.MainViewController">
    <children>
       <Pane prefHeight="480.0" prefWidth="408.0" style="-fx-background-color: #6E6E6E;">
          <children>
@@ -21,7 +21,7 @@
                </font>
             </Text>
             <Line endX="122.0" layoutX="115.0" layoutY="47.0" startX="-100.0" stroke="#aeaeae" />
-            <ListView fx:id="logListView" layoutX="15.0" layoutY="64.0" prefHeight="368.0" prefWidth="375.0" />
+            <ListView fx:id="auctionListView" layoutX="15.0" layoutY="64.0" prefHeight="368.0" prefWidth="375.0" />
             <Button layoutX="15.0" layoutY="441.0" mnemonicParsing="false" text="Atualizar" />
          </children>
       </Pane>
@@ -35,20 +35,20 @@
                      </font>
                   </Text>
                   <Line endX="78.0" layoutX="114.0" layoutY="47.0" startX="-100.0" stroke="#aeaeae" />
-                  <ListView fx:id="topicsListView" layoutX="16.0" layoutY="64.0" prefHeight="182.0" prefWidth="369.0" />
+                  <ListView fx:id="myAuctionsListView" layoutX="16.0" layoutY="64.0" prefHeight="182.0" prefWidth="369.0" />
                   <Text fill="#a8a8a8" layoutX="15.0" layoutY="286.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Criar lote" wrappingWidth="202.392578125">
                      <font>
                         <Font name="Roboto Condensed" size="27.0" />
                      </font>
                   </Text>
                   <Line endX="78.0" layoutX="116.0" layoutY="293.0" startX="-100.0" stroke="#aeaeae" />
-                  <TextField layoutX="16.0" layoutY="322.0" prefHeight="25.0" prefWidth="367.0" />
+                  <TextField fx:id="auctionIdField" layoutX="16.0" layoutY="322.0" prefHeight="25.0" prefWidth="367.0" />
                   <Text fill="WHITE" layoutX="16.0" layoutY="318.0" strokeType="OUTSIDE" strokeWidth="0.0" text="ID do lote">
                      <font>
                         <Font size="13.0" />
                      </font>
                   </Text>
-                  <TextArea layoutX="16.0" layoutY="366.0" prefHeight="63.0" prefWidth="367.0" />
+                  <TextArea fx:id="auctionDescriptionField" layoutX="16.0" layoutY="366.0" prefHeight="63.0" prefWidth="367.0" />
                   <Button layoutX="14.0" layoutY="441.0" mnemonicParsing="false" text="Criar lote" />
                   <Text fill="WHITE" layoutX="16.0" layoutY="361.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Descrição do lote">
                      <font>

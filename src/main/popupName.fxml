@@ -6,11 +6,11 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Text?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="334.0" prefWidth="399.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.ReadDataController">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="334.0" prefWidth="399.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.ReadDataController">
    <children>
       <Button fx:id="confirmButton" layoutX="160.0" layoutY="256.0" mnemonicParsing="false" onAction="#onConfirmButton" prefHeight="44.0" prefWidth="87.0" text="Aceitar" />
       <TextField fx:id="brokerAddressField" layoutX="62.0" layoutY="37.0" prefHeight="32.0" prefWidth="279.0" />
-      <Text layoutX="62.0" layoutY="27.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Endereço Apache River (vazio para localhost)" textAlignment="CENTER" wrappingWidth="279.0" />
+      <Text layoutX="48.0" layoutY="26.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Endereço Apache River (vazio para localhost)" textAlignment="CENTER" wrappingWidth="304.0" />
       <Text layoutX="60.0" layoutY="117.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Usuário" />
       <Text fx:id="invalidIPText" fill="RED" layoutX="164.0" layoutY="82.0" strokeType="OUTSIDE" strokeWidth="0.0" text="IP inválido!" />
       <Text fx:id="wrongPasswordText" fill="RED" layoutX="266.0" layoutY="167.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Senha errada!" />

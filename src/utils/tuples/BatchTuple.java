@@ -23,7 +23,8 @@ public class BatchTuple implements Entry {
 
     public BatchTuple(){}
 
-    public BatchTuple(String description, String sellerId) {
+    public BatchTuple(String id, String description, String sellerId) {
+        this.id = id;
         this.description = description;
         this.sellerId = sellerId;
     }

@@ -1,7 +1,5 @@
 package main;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -11,10 +9,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import net.jini.core.transaction.TransactionException;
 import networking.NetworkHandlerSingleton;
+import utils.exceptions.AcquireTupleException;
 import utils.exceptions.JavaSpaceNotFoundException;
-import utils.exceptions.PasswordIncorrectException;
 
+import java.rmi.RemoteException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,41 +67,19 @@ public class ReadDataController {
     }
 
     @FXML
-    void onRefreshButton() {
-        String ip = getIp();
-        createConnectionAndRefreshTopicsWithIP(ip);
-    }
-
-    @FXML
     public void initialize() {
         invalidIPText.setOpacity(0);
         wrongPasswordText.setOpacity(0);
         failedConnectionText.setOpacity(0);
     }
 
-    @FXML
-    public void onConfirmButton(ActionEvent event) {
-
-        String userName = userField.getText().trim();
-        String password = passwordField.getText().trim();
-
-        try {
-            NetworkHandlerSingleton.getInstance().loginUser(userName, password);
-        } catch (PasswordIncorrectException e) {
-            System.out.println("Wrong password");
-            wrongPasswordText.setOpacity(1);
-        } catch (JavaSpaceNotFoundException e) {
-            System.out.println("Javaspace not found");
-            failedConnectionText.setOpacity(1);
-        }
-        wrongPasswordText.setOpacity(0);
-        failedConnectionText.setOpacity(0);
-
-
+    private void closeSelfWindow(ActionEvent event) {
         Node source = (Node) event.getSource();
         Stage stage = (Stage) source.getScene().getWindow();
         stage.close();
+    }
 
+    private void openMainWindow() {
         try {
             Stage primaryStage = new Stage();
             Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
@@ -112,6 +90,44 @@ public class ReadDataController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    public void onConfirmButton(ActionEvent event) {
+
+        String userName = userField.getText().trim();
+
+        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
+
+        try {
+            networkHandler.loginUser(userName);
+        } catch (JavaSpaceNotFoundException e) {
+            System.out.println("Javaspace not found");
+            failedConnectionText.setOpacity(1);
+            return;
+        } catch (AcquireTupleException e) {
+            System.out.println("Failed to acquire a tuple!");
+            failedConnectionText.setOpacity(1);
+            return;
+        }
+        wrongPasswordText.setOpacity(0);
+        failedConnectionText.setOpacity(0);
+
+
+        try {
+            if (!networkHandler.auctionTrackerExists()) {
+                networkHandler.writeAuctionTracker();
+            }
+        } catch (JavaSpaceNotFoundException e) {
+            System.out.println("Javaspace not found!");
+            return;
+        } catch (TransactionException | RemoteException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        closeSelfWindow(event);
+        openMainWindow();
     }
 
 }

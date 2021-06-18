@@ -26,7 +26,7 @@ public class ClientDataSingleton {
 
     public void saveUserDataFromTuple(UserTuple user) {
         this.userName = user.userID;
-        this.password = user.password;
+        this.createdAuctions = user.madeAuctions;
     }
 
     public void setBrokerIP(String ip) {
