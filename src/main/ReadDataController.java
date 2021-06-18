@@ -116,7 +116,15 @@ public class ReadDataController {
 
         try {
             if (!networkHandler.auctionTrackerExists()) {
+                System.out.println("Auction tracker offline. Creating...");
                 networkHandler.writeAuctionTracker();
+                if (networkHandler.auctionTrackerExists()) {
+                    System.out.println("Auction tracker created.");
+                } else {
+                    System.out.println("Auction tracker wasn't created!");
+                }
+            } else {
+                System.out.println("Auction tracker online");
             }
         } catch (JavaSpaceNotFoundException e) {
             System.out.println("Javaspace not found!");

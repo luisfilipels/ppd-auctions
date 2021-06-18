@@ -30,6 +30,21 @@ public class MainViewController {
     private ListView<String> myAuctionsListView;
     private ObservableList<String> myAuctionsList;
 
+    @FXML
+    private TextField auctionIdField;
+
+    @FXML
+    private TextArea auctionDescriptionField;
+
+    @FXML
+    private Button createAuctionButton;
+
+
+    @FXML
+    void updateViewsButtonClick() {
+        updateLists();
+    }
+
     private void openDetailsForAuction(String auctionID) {
         // TODO: Complete this
         System.out.println("Working with auction " + auctionID);
@@ -58,6 +73,22 @@ public class MainViewController {
         auctionList.add(box);
     }
 
+    @FXML
+    void createAuctionButtonClick() {
+        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
+        ClientDataSingleton clientData = ClientDataSingleton.getInstance();
+        try {
+            networkHandler.writeBatch(auctionIdField.getText(), auctionDescriptionField.getText(), clientData.userName);
+        } catch (JavaSpaceNotFoundException e) {
+            e.printStackTrace();
+        } catch (TransactionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        updateLists();
+    }
+
     private void updateMainList() throws Exception {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
 
@@ -65,12 +96,16 @@ public class MainViewController {
             networkHandler.writeAuctionTracker();
         }
 
-        AuctionTrackerTuple auctionTracker = networkHandler.takeAuctionTracker();
+        AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker();
         if (auctionTracker == null) {
             System.out.println("Didn't get the auction tracker!");
             return;
         }
+        System.out.println("Got auction tracker");
 
+        auctionList.clear();
+        System.out.println("Adding auction list");
+        System.out.println("Size: " + auctionTracker.auctionList.size());
         for (String auction : auctionTracker.auctionList) {
             addLog(auction, "0");
         }
@@ -97,6 +132,8 @@ public class MainViewController {
         networkHandler.setMainController(this);
 
         ClientDataSingleton clientData = ClientDataSingleton.getInstance();
+
+        updateLists();
 
         //addLog("Abc", "123");
         //addLog("Abc", "123");
