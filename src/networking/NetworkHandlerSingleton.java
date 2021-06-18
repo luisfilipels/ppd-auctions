@@ -1,6 +1,8 @@
 package networking;
 
 import main.MainViewController;
+import net.jini.core.entry.UnusableEntryException;
+import net.jini.core.transaction.TransactionException;
 import net.jini.space.JavaSpace;
 import utils.ClientDataSingleton;
 import utils.exceptions.JavaSpaceNotFoundException;
@@ -8,6 +10,8 @@ import utils.exceptions.PasswordIncorrectException;
 import utils.tuples.UserTuple;
 
 import java.nio.file.attribute.UserPrincipalNotFoundException;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 public class NetworkHandlerSingleton {
 
@@ -33,18 +37,34 @@ public class NetworkHandlerSingleton {
     public UserTuple findUser(UserTuple user) {
         UserTuple userEntered = null;
         try {
-            userEntered = (UserTuple) javaSpace.take(user, null, 1);
-        } catch (Exception e) {
-            System.out.println("Problem when finding user!");
+            userEntered = (UserTuple) javaSpace.readIfExists(user, null, 1000);
+        } catch (UnusableEntryException e) {
             e.printStackTrace();
-            return null;
+        } catch (TransactionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return userEntered;
     }
 
+    private void clearUserTuples() {
+        UserTuple tuple = null;
+        do {
+            try {
+                tuple = (UserTuple) javaSpace.take(new UserTuple(null, null), null, 1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
+        } while (tuple != null);
+    }
+
     public void writeUserTuple(UserTuple user) {
         try {
-            javaSpace.write(user, null, 1);
+            javaSpace.write(user, null, 1000);
         } catch (Exception e) {
             System.out.println("Could not save user tuple!");
             e.printStackTrace();
@@ -55,30 +75,32 @@ public class NetworkHandlerSingleton {
             throws PasswordIncorrectException, JavaSpaceNotFoundException {
         if (javaSpace == null) {
             javaSpace = getJavaSpace();
-            System.out.println(3);
         }
         if (javaSpace == null) {
             throw new JavaSpaceNotFoundException();
         }
 
-        UserTuple userEntering = new UserTuple(userName, password, null);
+        UserTuple userEntering = new UserTuple();
+        userEntering.userID = userName;
         UserTuple userEntered = findUser(userEntering);
+
+        if (findUser(new UserTuple()) == null) {
+            System.out.println("Didn't read anything!!!");
+        }
+        // TODO: Find out why nothing is being returned!!!!!!
+
         if (userEntered != null) {
-            // User exists and password is correct
+            // User exists
+            System.out.println("Login ok");
             ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntered);
         } else {
-            // User does not exist, or password is incorrect
-            UserTuple wrongPasswordUser = new UserTuple(userName, null, null);
-            userEntered = findUser(wrongPasswordUser);
-            if (userEntered != null) {
-                // User exists, so password must be incorrect
-                throw new PasswordIncorrectException();
-            } else {
-                // User does not exist, so create and proceed
-                writeUserTuple(userEntering);
-                ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntering);
-            }
+            // User does not exist, so create and proceed
+            writeUserTuple(userEntering);
+            UserTuple testTuple = findUser(userEntering);
+            if (testTuple != null) System.out.println("Creating user");
+            ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntering);
         }
+        //clearUserTuples();
     }
 
     public void initialize(MainViewController mainViewController) {

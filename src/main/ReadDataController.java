@@ -88,8 +88,10 @@ public class ReadDataController {
         try {
             NetworkHandlerSingleton.getInstance().loginUser(userName, password);
         } catch (PasswordIncorrectException e) {
+            System.out.println("Wrong password");
             wrongPasswordText.setOpacity(1);
         } catch (JavaSpaceNotFoundException e) {
+            System.out.println("Javaspace not found");
             failedConnectionText.setOpacity(1);
         }
         wrongPasswordText.setOpacity(0);
