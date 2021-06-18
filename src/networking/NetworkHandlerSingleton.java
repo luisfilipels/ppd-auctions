@@ -110,6 +110,11 @@ public class NetworkHandlerSingleton {
         }
     }
 
+    public void writeAuction(BatchTuple tuple) throws TransactionException, RemoteException {
+        javaSpace = getJavaSpace();
+        javaSpace.write(tuple, null, 60 * 60 * 1000);
+    }
+
     public void writeAuction(String id, String description, String sellerID) throws JavaSpaceNotFoundException, TransactionException, RemoteException {
         javaSpace = getJavaSpace();
         if (javaSpace == null) {
@@ -156,6 +161,14 @@ public class NetworkHandlerSingleton {
         BatchTuple tuple = new BatchTuple(id, description, sellerID);
         javaSpace.write(tuple, null, 60 * 60 * 1000);
         System.out.println("Attempted to write batch");
+    }
+
+    public BatchTuple takeAuctionTuple(String id) throws Exception {
+        javaSpace = getJavaSpace();
+        if (javaSpace == null) throw new JavaSpaceNotFoundException();
+
+        BatchTuple template = new BatchTuple(id, null, null);
+        return (BatchTuple) javaSpace.take(template, null, 60 * 60 * 1000);
     }
 
     public void loginUser(String userName)

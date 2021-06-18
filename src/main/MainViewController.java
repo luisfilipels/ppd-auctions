@@ -3,7 +3,10 @@ package main;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.VPos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.fxml.FXML;
 import javafx.scene.input.MouseEvent;
@@ -11,6 +14,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import net.jini.core.transaction.TransactionException;
 import networking.NetworkHandlerSingleton;
 import utils.ClientDataSingleton;
@@ -46,9 +50,23 @@ public class MainViewController {
         updateLists();
     }
 
+    private void openDetailsWindow() {
+        try {
+            Stage primaryStage = new Stage();
+            Parent root = FXMLLoader.load(getClass().getResource("auctionDetails.fxml"));
+            primaryStage.setTitle("Cliente");
+            primaryStage.setScene(new Scene(root, 800, 500));
+            //primaryStage.setResizable(false);
+            primaryStage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void openDetailsForAuction(String auctionID) {
         // TODO: Complete this
-        System.out.println("Working with auction " + auctionID);
+        ClientDataSingleton.getInstance().setLastClickedID(auctionID);
+        openDetailsWindow();
     }
 
     public void addEntryToMainAuctionList(String auctionId, String bidCount) {

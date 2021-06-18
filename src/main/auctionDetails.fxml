@@ -12,15 +12,14 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="351.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="351.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.AuctionDetailsController">
    <children>
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="ID do lote:">
          <VBox.margin>
             <Insets left="20.0" top="10.0" />
          </VBox.margin>
       </Text>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="AAAAAAAA">
+      <Text fx:id="auctionIdText" strokeType="OUTSIDE" strokeWidth="0.0" text="AAAAAAAA">
          <VBox.margin>
             <Insets left="20.0" />
          </VBox.margin>
@@ -33,9 +32,9 @@
             <Insets left="20.0" />
          </VBox.margin>
       </Text>
-      <ScrollPane prefHeight="82.0" prefWidth="351.0">
+      <ScrollPane fx:id="scrollPane" prefHeight="82.0" prefWidth="351.0">
          <content>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." wrappingWidth="337.0" />
+            <Text fx:id="auctionDescriptionText" boundsType="VISUAL" strokeType="OUTSIDE" strokeWidth="0.0" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." wrappingWidth="337.0" />
          </content>
          <VBox.margin>
             <Insets left="20.0" right="20.0" />
@@ -46,7 +45,7 @@
             <Insets left="20.0" />
          </VBox.margin>
       </Text>
-      <ListView prefHeight="200.0" prefWidth="200.0">
+      <ListView fx:id="bidListView" prefHeight="100.0" prefWidth="311.0">
          <VBox.margin>
             <Insets left="20.0" right="20.0" />
          </VBox.margin>
@@ -58,7 +57,7 @@
                   <Insets left="20.0" top="10.0" />
                </HBox.margin>
             </Text>
-            <TextField prefHeight="25.0" prefWidth="221.0">
+            <TextField fx:id="bidValueField" prefHeight="25.0" prefWidth="221.0">
                <HBox.margin>
                   <Insets left="10.0" top="5.0" />
                </HBox.margin>
@@ -72,7 +71,7 @@
                   <Insets left="20.0" top="10.0" />
                </HBox.margin>
             </Text>
-            <CheckBox mnemonicParsing="false">
+            <CheckBox fx:id="publicBidCheckBox" mnemonicParsing="false">
                <HBox.margin>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="10.0" />
                </HBox.margin>
