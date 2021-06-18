@@ -13,6 +13,7 @@ import utils.tuples.UserTuple;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class NetworkHandlerSingleton {
 
@@ -188,7 +189,18 @@ public class NetworkHandlerSingleton {
         this.mainViewController = mainViewController;
     }
 
-    public void deleteAuctionWitID(String auctionID) throws AcquireTupleException {
+    private void removeStringFromList(List<String> list, String str) {
+        int indexToRemove = -1;
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).equals(str)) {
+                indexToRemove = i;
+                break;
+            }
+        }
+        if (indexToRemove != -1) list.remove(indexToRemove);
+    }
+
+    public void deleteAuctionWithID(String auctionID) throws AcquireTupleException {
         javaSpace = getJavaSpace();
 
         UserTuple myUser = new UserTuple();
@@ -205,8 +217,24 @@ public class NetworkHandlerSingleton {
             return;
         }
 
-        myUser.madeAuctions.remove(auctionID);
+        System.out.println("My list before: ");
+        System.out.println(myUser.madeAuctions);
+        removeStringFromList(myUser.madeAuctions, auctionID);
+        System.out.println("My list after: ");
+        System.out.println(myUser.madeAuctions);
         writeUserTuple(myUser);
 
+        AuctionTrackerTuple auctionTracker;
+        try {
+            auctionTracker = takeAuctionTracker();
+            if (auctionTracker == null) {
+                System.out.println("Couldn't get auction tracker!");
+                return;
+            }
+            removeStringFromList(auctionTracker.auctionList, auctionID);
+            writeAuctionTracker(auctionTracker);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
