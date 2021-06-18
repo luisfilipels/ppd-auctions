@@ -77,7 +77,7 @@ public class MainViewController {
     void createAuctionButtonClick() {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
         ClientDataSingleton clientData = ClientDataSingleton.getInstance();
-        try {
+        /*try {
             networkHandler.writeBatch(auctionIdField.getText(), auctionDescriptionField.getText(), clientData.userName);
         } catch (JavaSpaceNotFoundException e) {
             e.printStackTrace();
@@ -85,7 +85,7 @@ public class MainViewController {
             e.printStackTrace();
         } catch (RemoteException e) {
             e.printStackTrace();
-        }
+        }*/
         updateLists();
     }
 

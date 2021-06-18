@@ -43,6 +43,14 @@ public class NetworkHandlerSingleton {
         }
     }
 
+    public UserTuple takeUser(UserTuple user) throws  AcquireTupleException {
+        try {
+            return (UserTuple) javaSpace.take(user, null, 5000);
+        } catch (Exception e) {
+            throw new AcquireTupleException();
+        }
+    }
+
     private void _clearUserTuples() {
         UserTuple tuple = null;
         do {
@@ -101,7 +109,7 @@ public class NetworkHandlerSingleton {
         }
     }
 
-    public void writeBatch(String id, String description, String sellerID) throws JavaSpaceNotFoundException, TransactionException, RemoteException {
+    public void writeAuction(String id, String description, String sellerID) throws JavaSpaceNotFoundException, TransactionException, RemoteException {
         javaSpace = getJavaSpace();
         if (javaSpace == null) {
             throw new JavaSpaceNotFoundException();
@@ -119,6 +127,25 @@ public class NetworkHandlerSingleton {
             }
             auctionTracker.auctionList.add(id);
             writeAuctionTracker(auctionTracker);
+
+
+            ClientDataSingleton clientData = ClientDataSingleton.getInstance();
+            UserTuple myUser = new UserTuple();
+            myUser.userID = clientData.userName;
+
+            myUser = takeUser(myUser);
+            if (myUser == null) {
+                System.out.println("Couldn't update user!");
+                return;
+            } else {
+                System.out.println("Took user");
+            }
+            if (myUser.madeAuctions == null) {
+                myUser.madeAuctions = new ArrayList<>();
+            }
+            myUser.madeAuctions.add(id);
+            writeUserTuple(myUser);
+            System.out.println("Wrote user");
         } catch (Exception e) {
             System.out.println("Couldn't write batch!");
             e.printStackTrace();
@@ -161,4 +188,25 @@ public class NetworkHandlerSingleton {
         this.mainViewController = mainViewController;
     }
 
+    public void deleteAuctionWitID(String auctionID) throws AcquireTupleException {
+        javaSpace = getJavaSpace();
+
+        UserTuple myUser = new UserTuple();
+        myUser.userID = ClientDataSingleton.getInstance().userName;
+
+        myUser = takeUser(myUser);
+        if (myUser == null) {
+            System.out.println("Couldn't find user in tuple space!");
+            return;
+        }
+        if (myUser.madeAuctions == null) {
+            System.out.println("User's tuple didn't have a list!");
+            writeUserTuple(myUser);
+            return;
+        }
+
+        myUser.madeAuctions.remove(auctionID);
+        writeUserTuple(myUser);
+
+    }
 }

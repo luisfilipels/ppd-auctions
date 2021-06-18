@@ -8,13 +8,9 @@ import java.util.List;
 public class ClientDataSingleton {
 
     private static ClientDataSingleton instance;
-    private ClientDataSingleton() {
-        createdAuctions = new ArrayList<>();
-    }
+    private ClientDataSingleton() { }
 
-    private List<String> createdAuctions;
     public String userName = "";
-    public String password = "";
     private String brokerIP = "";
 
     public static ClientDataSingleton getInstance() {
@@ -26,7 +22,6 @@ public class ClientDataSingleton {
 
     public void saveUserDataFromTuple(UserTuple user) {
         this.userName = user.userID;
-        this.createdAuctions = user.madeAuctions;
     }
 
     public void setBrokerIP(String ip) {
