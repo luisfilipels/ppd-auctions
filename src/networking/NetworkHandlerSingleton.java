@@ -36,17 +36,17 @@ public class NetworkHandlerSingleton {
         return (JavaSpace) finder.getService();
     }
 
-    public UserTuple readUser(UserTuple user) throws AcquireTupleException {
+    public UserTuple readUser(UserTuple user, long timeout) throws AcquireTupleException {
         try {
-            return (UserTuple) javaSpace.read(user, null, 5000);
+            return (UserTuple) javaSpace.read(user, null, timeout);
         } catch (Exception e) {
             throw new AcquireTupleException();
         }
     }
 
-    public UserTuple takeUser(UserTuple user) throws  AcquireTupleException {
+    public UserTuple takeUser(UserTuple user, long timeout) throws  AcquireTupleException {
         try {
-            return (UserTuple) javaSpace.take(user, null, 5000);
+            return (UserTuple) javaSpace.take(user, null, timeout);
         } catch (Exception e) {
             throw new AcquireTupleException();
         }
@@ -76,14 +76,14 @@ public class NetworkHandlerSingleton {
         javaSpace.write(tuple, null, 60 * 60 * 1000);
     }
 
-    public AuctionTrackerTuple takeAuctionTracker() throws Exception{
+    public AuctionTrackerTuple takeAuctionTracker(long timeout) throws Exception{
         javaSpace = getJavaSpace();
-        return (AuctionTrackerTuple) javaSpace.take(new AuctionTrackerTuple(), null, 15000);
+        return (AuctionTrackerTuple) javaSpace.take(new AuctionTrackerTuple(), null, timeout);
     }
 
-    public AuctionTrackerTuple readAuctionTracker() throws Exception{
+    public AuctionTrackerTuple readAuctionTracker(long timeout) throws Exception{
         javaSpace = getJavaSpace();
-        return (AuctionTrackerTuple) javaSpace.read(new AuctionTrackerTuple(), null, 15000);
+        return (AuctionTrackerTuple) javaSpace.read(new AuctionTrackerTuple(), null, timeout);
     }
 
     public boolean auctionTrackerExists() throws JavaSpaceNotFoundException{
@@ -92,7 +92,7 @@ public class NetworkHandlerSingleton {
 
         AuctionTrackerTuple result = null;
         try {
-            result = readAuctionTracker();
+            result = readAuctionTracker(5000);
         } catch (Exception e) {
             System.out.println("Couldn't check if auction tracker exists!");
             e.printStackTrace();
@@ -118,17 +118,21 @@ public class NetworkHandlerSingleton {
         javaSpace.write(tuple, null, 60 * 60 * 1000);
     }
 
-    public void writeAuction(String id, String description, String sellerID) throws JavaSpaceNotFoundException, TransactionException, RemoteException {
+    public void writeAuction(String id, String description, String sellerID) throws JavaSpaceNotFoundException, TransactionException, RemoteException, AcquireTupleException {
         javaSpace = getJavaSpace();
         if (javaSpace == null) {
             throw new JavaSpaceNotFoundException();
         }
 
         try {
-            AuctionTrackerTuple auctionTracker = takeAuctionTracker();
+            AuctionTrackerTuple auctionTracker = takeAuctionTracker(5000);
             if (auctionTracker == null) {
                 writeAuctionTracker();
-                auctionTracker = takeAuctionTracker();
+                auctionTracker = takeAuctionTracker(5000);
+                if (auctionTracker == null) {
+                    System.out.println("Could not acquire auction tracker!");
+                    throw new AcquireTupleException();
+                }
             } else {
                 if (auctionTracker.auctionList == null) {
                     auctionTracker.auctionList = new ArrayList<>();
@@ -142,7 +146,7 @@ public class NetworkHandlerSingleton {
             UserTuple myUser = new UserTuple();
             myUser.userID = clientData.userName;
 
-            myUser = takeUser(myUser);
+            myUser = takeUser(myUser, 5000);
             if (myUser == null) {
                 System.out.println("Couldn't update user!");
                 return;
@@ -166,13 +170,13 @@ public class NetworkHandlerSingleton {
         System.out.println("Attempted to write batch");
     }
 
-    public BatchTuple takeAuctionTuple(String id) throws Exception {
+    public BatchTuple takeAuctionTuple(String id, long timeout) throws Exception {
         javaSpace = getJavaSpace();
         if (javaSpace == null) throw new JavaSpaceNotFoundException();
 
         BatchTuple template = new BatchTuple(id, null, null);
         template.bids = null;
-        return (BatchTuple) javaSpace.take(template, null, 60 * 60 * 1000);
+        return (BatchTuple) javaSpace.take(template, null, timeout);
     }
 
     public BatchTuple readAuctionTuple(String auctionID) throws Exception{
@@ -194,7 +198,7 @@ public class NetworkHandlerSingleton {
         UserTuple userEntering = new UserTuple();
         userEntering.userID = userName;
 
-        UserTuple userEntered = readUser(userEntering);
+        UserTuple userEntered = readUser(userEntering, 6000);
 
         if (userEntered != null) {
             // User exists
@@ -204,7 +208,7 @@ public class NetworkHandlerSingleton {
             // User does not exist, so create and proceed
             userEntering.madeAuctions = new ArrayList<>();
             writeUserTuple(userEntering);
-            UserTuple testTuple = readUser(userEntering);
+            UserTuple testTuple = readUser(userEntering, 6000);
             if (testTuple != null) System.out.println("Creating user");
             ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntering);
         }
@@ -232,10 +236,10 @@ public class NetworkHandlerSingleton {
         UserTuple myUser = new UserTuple();
         myUser.userID = ClientDataSingleton.getInstance().userName;
 
-        myUser = takeUser(myUser);
+        myUser = takeUser(myUser, 6000);
         if (myUser == null) {
             System.out.println("Couldn't find user in tuple space!");
-            return;
+            throw new AcquireTupleException();
         }
         if (myUser.madeAuctions == null) {
             System.out.println("User's tuple didn't have a list!");
@@ -252,10 +256,10 @@ public class NetworkHandlerSingleton {
 
         AuctionTrackerTuple auctionTracker;
         try {
-            auctionTracker = takeAuctionTracker();
+            auctionTracker = takeAuctionTracker(6000);
             if (auctionTracker == null) {
                 System.out.println("Couldn't get auction tracker!");
-                return;
+                throw new AcquireTupleException();
             }
             removeStringFromList(auctionTracker.auctionList, auctionID);
             writeAuctionTracker(auctionTracker);
@@ -264,10 +268,10 @@ public class NetworkHandlerSingleton {
         }
 
         try {
-            BatchTuple foundTuple = takeAuctionTuple(auctionID);
+            BatchTuple foundTuple = takeAuctionTuple(auctionID, 6000);
 
             if (foundTuple == null) {
-                throw new Exception();
+                throw new AcquireTupleException();
             }
         } catch (Exception e) {
             System.out.println("Couldn't take tuple!");

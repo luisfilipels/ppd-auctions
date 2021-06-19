@@ -64,7 +64,6 @@ public class MainViewController {
     }
 
     private void openDetailsForAuction(String auctionID) {
-        // TODO: Complete this
         ClientDataSingleton.getInstance().setLastClickedID(auctionID);
         openDetailsWindow();
     }
@@ -136,6 +135,9 @@ public class MainViewController {
             e.printStackTrace();
         } catch (RemoteException e) {
             e.printStackTrace();
+        } catch (AcquireTupleException e) {
+            System.out.println("Could not acquire tuple when writing auction.");
+            e.printStackTrace();
         }
         updateLists();
     }
@@ -147,7 +149,7 @@ public class MainViewController {
             networkHandler.writeAuctionTracker();
         }
 
-        AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker();
+        AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker(6000);
         if (auctionTracker == null) {
             System.out.println("Didn't get the auction tracker!");
             return;
@@ -171,7 +173,7 @@ public class MainViewController {
 
         UserTuple myUser = new UserTuple();
         myUser.userID = ClientDataSingleton.getInstance().userName;
-        myUser = networkHandler.readUser(myUser);
+        myUser = networkHandler.readUser(myUser, 6000);
         if (myUser == null) {
             System.out.println("Didn't get my user!");
             return;

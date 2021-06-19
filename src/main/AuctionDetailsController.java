@@ -64,14 +64,15 @@ public class AuctionDetailsController {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
 
         try {
-            BatchTuple thisBatch = networkHandler.takeAuctionTuple(auctionID);
+            BatchTuple thisBatch = networkHandler.takeAuctionTuple(auctionID, 5000);
             if (thisBatch == null) {
                 System.out.println("Couldn't get batch information!");
                 return;
             }
             int value = Integer.parseInt(bidValueField.getText());
             boolean isPublic = publicBidCheckBox.isSelected();
-            thisBatch.addBid(value, isPublic);
+            System.out.println("isPublic: " + isPublic);
+            thisBatch.addBid(ClientDataSingleton.getInstance().userName, value, isPublic);
             networkHandler.writeAuction(thisBatch);
 
             if (networkHandler.readAuctionTuple(auctionID) == null) {
@@ -100,19 +101,21 @@ public class AuctionDetailsController {
                 return;
             }
             for (Map.Entry<String, String> entry : thisBatch.bids.entrySet()) {
-                // TODO: Fix private bids
                 String[] bidData = entry.getValue().split("\\|");
                 int value = Integer.parseInt(bidData[0]);
                 boolean isPublic = bidData[1].equals("true");
+                System.out.println("isPublic!!!: " + isPublic);
                 String bidCreator = entry.getKey();
                 if (bidCreator.equals(clientData.userName)) {
                     // I created the bid, so I should absolutely see the bid
+                    System.out.println(1);
                     if (isPublic) {
-                        bidList.add(new Text("Criador: Você (privado), valor: " + value));
-                    } else {
                         bidList.add(new Text("Criador: Você, valor: " + value));
+                    } else {
+                        bidList.add(new Text("Criador: Você (privado), valor: " + value));
                     }
                 } else {
+                    System.out.println(2);
                     // I didn't create the bid, so I should only see the bid if I created the
                     // auction, of if it is public
                     if (isPublic) {

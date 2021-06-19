@@ -19,8 +19,9 @@ public class BatchTuple implements Entry {
         this.sellerId = sellerId;
     }
 
-    public void addBid(int value, boolean isPublic) {
+    public void addBid(String creator, int value, boolean isPublic) {
         String bidData = value + "|" + isPublic;
-        bids.put(sellerId, bidData);
+        System.out.println(bidData);
+        bids.put(creator, bidData);
     }
 }

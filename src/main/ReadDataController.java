@@ -79,11 +79,11 @@ public class ReadDataController {
         stage.close();
     }
 
-    private void openMainWindow() {
+    private void openMainWindowWithUserName(String userName) {
         try {
             Stage primaryStage = new Stage();
             Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
-            primaryStage.setTitle("Cliente");
+            primaryStage.setTitle("Cliente (" + userName + ")");
             primaryStage.setScene(new Scene(root, 800, 500));
             primaryStage.setResizable(false);
             primaryStage.show();
@@ -135,7 +135,7 @@ public class ReadDataController {
         }
 
         closeSelfWindow(event);
-        openMainWindow();
+        openMainWindowWithUserName(userName);
     }
 
 }
