@@ -4,7 +4,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.VPos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -41,8 +40,20 @@ public class MainViewController {
     @FXML
     private TextArea auctionDescriptionField;
 
+    private NetworkHandlerSingleton networkHandler;
+    private ClientDataSingleton clientData;
+
     @FXML
     void initialize() {
+        clientData = ClientDataSingleton.getInstance();
+        try {
+            networkHandler = NetworkHandlerSingleton.getInstance();
+            prepareSpaceForAuction();
+        } catch (Exception e) {
+            System.out.println("Could not prepare JavaSpace for auctions!");
+            e.printStackTrace();
+            System.exit(0);
+        }
         setUpLists();
         updateLists();
     }
@@ -62,8 +73,6 @@ public class MainViewController {
     }
 
     private void writeAuction() {
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-        ClientDataSingleton clientData = ClientDataSingleton.getInstance();
         try {
             networkHandler.writeAuction(auctionIdField.getText(), auctionDescriptionField.getText(), clientData.userName);
         } catch (JavaSpaceNotFoundException | TransactionException | RemoteException e) {
@@ -90,9 +99,7 @@ public class MainViewController {
     }
 
     private void updateMyList() throws Exception{
-        NetworkHandlerSingleton networkHandler = prepareSpaceForAuction();
-
-        UserTuple myUser = getMyUser(networkHandler);
+        UserTuple myUser = getMyUserWithHandler(networkHandler);
 
         myAuctionsList.clear();
         for (String auction : myUser.madeAuctions) {
@@ -100,7 +107,7 @@ public class MainViewController {
         }
     }
 
-    private UserTuple getMyUser(NetworkHandlerSingleton networkHandler) throws AcquireTupleException {
+    private UserTuple getMyUserWithHandler(NetworkHandlerSingleton networkHandler) throws AcquireTupleException {
         UserTuple template = new UserTuple();
         template.userID = ClientDataSingleton.getInstance().userName;
         UserTuple myUser = networkHandler.readUser(template, 6000);
@@ -112,8 +119,6 @@ public class MainViewController {
     }
 
     private void updateMainList() throws Exception {
-        NetworkHandlerSingleton networkHandler = prepareSpaceForAuction();
-
         AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker(6000);
         if (auctionTracker == null) {
             System.out.println("Didn't get the auction tracker!");
@@ -126,12 +131,10 @@ public class MainViewController {
         }
     }
 
-    private NetworkHandlerSingleton prepareSpaceForAuction() throws JavaSpaceNotFoundException, TransactionException, RemoteException {
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
+    private void prepareSpaceForAuction() throws JavaSpaceNotFoundException, TransactionException, RemoteException {
         if (!networkHandler.auctionTrackerExists()) {
             networkHandler.writeAuctionTracker();
         }
-        return networkHandler;
     }
 
     public void addEntryToMyAuctionList(String auctionID, String bidCount) {
@@ -140,16 +143,13 @@ public class MainViewController {
         Region spacer = new Region();
         Button button = new Button();
         button.setText("Excluir");
-        button.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                try {
-                    NetworkHandlerSingleton.getInstance().deleteAuctionWithID(auctionID);
-                    updateLists();
-                } catch (AcquireTupleException e) {
-                    System.out.println("Couldn't acquire tuple to be deleted!");
-                    e.printStackTrace();
-                }
+        button.setOnMouseClicked(mouseEvent -> {
+            try {
+                NetworkHandlerSingleton.getInstance().deleteAuctionWithID(auctionID);
+                updateLists();
+            } catch (AcquireTupleException e) {
+                System.out.println("Couldn't acquire tuple to be deleted!");
+                e.printStackTrace();
             }
         });
         HBox box = new HBox();
@@ -165,12 +165,7 @@ public class MainViewController {
         Region spacer = new Region();
         Button button = new Button();
         button.setText("Visualizar/Adicionar lance");
-        button.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                openDetailsForAuction(auctionId);
-            }
-        });
+        button.setOnMouseClicked(mouseEvent -> openDetailsForAuction(auctionId));
         HBox box = new HBox();
         box.setHgrow(spacer, Priority.ALWAYS);
         box.getChildren().addAll(text, spacer, button);
