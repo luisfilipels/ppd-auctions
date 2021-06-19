@@ -73,6 +73,7 @@ public class AuctionDetailsController {
 
     private void updateBids() {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
+        ClientDataSingleton clientData = ClientDataSingleton.getInstance();
         try {
             BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
             if (thisBatch == null) {
@@ -84,11 +85,29 @@ public class AuctionDetailsController {
                 return;
             }
             for (Map.Entry<String, String> entry : thisBatch.bids.entrySet()) {
-                // TODO: Take care of private bids
+                // TODO: Fix private bids
                 String[] bidData = entry.getValue().split("\\|");
                 int value = Integer.parseInt(bidData[0]);
                 boolean isPublic = bidData[1].equals("true");
-                bidList.add(new Text("Criador: " + entry.getKey() + ", valor: " + value));
+                String bidCreator = entry.getKey();
+                if (bidCreator.equals(clientData.userName)) {
+                    // I created the bid, so I should absolutely see the bid
+                    if (isPublic) {
+                        bidList.add(new Text("Criador: Você (privado), valor: " + value));
+                    } else {
+                        bidList.add(new Text("Criador: Você, valor: " + value));
+                    }
+                } else {
+                    // I didn't create the bid, so I should only see the bid if I created the
+                    // auction, of if it is public
+                    if (isPublic) {
+                        bidList.add(new Text("Criador: " + bidCreator + ", valor: " + value));
+                    } else {
+                        if (thisBatch.sellerId.equals(clientData.userName)) {
+                            bidList.add(new Text("Criador: " + bidCreator + " (privado), valor: " + value));
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
