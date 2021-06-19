@@ -17,7 +17,6 @@ import java.util.List;
 
 public class NetworkHandlerSingleton {
 
-    private MainViewController mainViewController;
     private static NetworkHandlerSingleton instance;
     private JavaSpace javaSpace;
 
@@ -213,10 +212,6 @@ public class NetworkHandlerSingleton {
             ClientDataSingleton.getInstance().saveUserDataFromTuple(userEntering);
         }
         //clearUserTuples();
-    }
-
-    public void setMainController(MainViewController mainViewController) {
-        this.mainViewController = mainViewController;
     }
 
     private void removeStringFromList(List<String> list, String str) {

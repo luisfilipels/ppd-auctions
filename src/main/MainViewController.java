@@ -42,150 +42,41 @@ public class MainViewController {
     private TextArea auctionDescriptionField;
 
     @FXML
-    private Button createAuctionButton;
-
-
-    @FXML
-    void updateViewsButtonClick() {
+    void initialize() {
+        setUpLists();
         updateLists();
     }
 
-    private void openDetailsWindow() {
-        try {
-            Stage primaryStage = new Stage();
-            Parent root = FXMLLoader.load(getClass().getResource("auctionDetails.fxml"));
-            primaryStage.setTitle("Cliente");
-            primaryStage.setScene(new Scene(root, 800, 500));
-            //primaryStage.setResizable(false);
-            primaryStage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    private void setUpLists() {
+        auctionList = FXCollections.observableArrayList();
+        auctionListView.setItems(auctionList);
 
-    private void openDetailsForAuction(String auctionID) {
-        ClientDataSingleton.getInstance().setLastClickedID(auctionID);
-        openDetailsWindow();
-    }
-
-    public void addEntryToMainAuctionList(String auctionId, String bidCount) {
-        Text text = new Text();
-        text.setText(auctionId + " (" + bidCount + " lances)");
-        text.setTextOrigin(VPos.BOTTOM);
-
-        Region spacer = new Region();
-
-        Button button = new Button();
-        button.setText("Visualizar");
-
-        button.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                openDetailsForAuction(auctionId);
-            }
-        });
-
-        HBox box = new HBox();
-        box.setHgrow(spacer, Priority.ALWAYS);
-        box.getChildren().addAll(text, spacer, button);
-        auctionList.add(box);
-        System.out.println("Added entry to main list");
-    }
-
-    public void addEntryToMyAuctionList(String auctionID, String bidCount) {
-        Text text = new Text();
-        text.setText(auctionID + " (" + bidCount + " lances)");
-        text.setTextOrigin(VPos.BOTTOM);
-
-        Region spacer = new Region();
-
-        Button button = new Button();
-        button.setText("Excluir");
-
-        button.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                try {
-                    System.out.println("Deleting auction with id " + auctionID);
-                    NetworkHandlerSingleton.getInstance().deleteAuctionWithID(auctionID);
-                    updateLists();
-                } catch (AcquireTupleException e) {
-                    System.out.println("Couldn't acquire tuple to be deleted!");
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        HBox box = new HBox();
-        box.setHgrow(spacer, Priority.ALWAYS);
-        box.getChildren().addAll(text, spacer, button);
-        myAuctionsList.add(box);
-        System.out.println("Added entry to my list");
+        myAuctionsList = FXCollections.observableArrayList();
+        myAuctionsListView.setItems(myAuctionsList);
     }
 
     @FXML
     void createAuctionButtonClick() {
+        writeAuction();
+        updateLists();
+    }
+
+    private void writeAuction() {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
         ClientDataSingleton clientData = ClientDataSingleton.getInstance();
         try {
             networkHandler.writeAuction(auctionIdField.getText(), auctionDescriptionField.getText(), clientData.userName);
-        } catch (JavaSpaceNotFoundException e) {
-            e.printStackTrace();
-        } catch (TransactionException e) {
-            e.printStackTrace();
-        } catch (RemoteException e) {
+        } catch (JavaSpaceNotFoundException | TransactionException | RemoteException e) {
             e.printStackTrace();
         } catch (AcquireTupleException e) {
             System.out.println("Could not acquire tuple when writing auction.");
             e.printStackTrace();
         }
+    }
+    
+    @FXML
+    void updateViewsButtonClick() {
         updateLists();
-    }
-
-    private void updateMainList() throws Exception {
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-
-        if(!networkHandler.auctionTrackerExists()) {
-            networkHandler.writeAuctionTracker();
-        }
-
-        AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker(6000);
-        if (auctionTracker == null) {
-            System.out.println("Didn't get the auction tracker!");
-            return;
-        }
-        System.out.println("Got auction tracker");
-
-        auctionList.clear();
-        System.out.println("Adding auction list");
-        System.out.println("Size of all auctions: " + auctionTracker.auctionList.size());
-        for (String auction : auctionTracker.auctionList) {
-            addEntryToMainAuctionList(auction, "0");
-        }
-    }
-
-    private void updateMyList() throws Exception{
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-
-        if(!networkHandler.auctionTrackerExists()) {
-            networkHandler.writeAuctionTracker();
-        }
-
-        UserTuple myUser = new UserTuple();
-        myUser.userID = ClientDataSingleton.getInstance().userName;
-        myUser = networkHandler.readUser(myUser, 6000);
-        if (myUser == null) {
-            System.out.println("Didn't get my user!");
-            return;
-        }
-        System.out.println("Got my user");
-
-        myAuctionsList.clear();
-        System.out.println("Adding auction list");
-        System.out.println("Size of my auctions: " + myUser.madeAuctions.size());
-        for (String auction : myUser.madeAuctions) {
-            addEntryToMyAuctionList(auction, "0");
-        }
     }
 
     private void updateLists() {
@@ -196,31 +87,111 @@ public class MainViewController {
             System.out.println("Couldn't update lists!");
             e.printStackTrace();
         }
-        auctionListView.refresh();
-        myAuctionsListView.refresh();
     }
 
-    @FXML
-    void initialize() {
-        auctionList = FXCollections.observableArrayList();
-        auctionListView.setItems(auctionList);
+    private void updateMyList() throws Exception{
+        NetworkHandlerSingleton networkHandler = prepareSpaceForAuction();
 
-        myAuctionsList = FXCollections.observableArrayList();
-        myAuctionsListView.setItems(myAuctionsList);
+        UserTuple myUser = getMyUser(networkHandler);
 
+        myAuctionsList.clear();
+        for (String auction : myUser.madeAuctions) {
+            addEntryToMyAuctionList(auction, "0");
+        }
+    }
+
+    private UserTuple getMyUser(NetworkHandlerSingleton networkHandler) throws AcquireTupleException {
+        UserTuple template = new UserTuple();
+        template.userID = ClientDataSingleton.getInstance().userName;
+        UserTuple myUser = networkHandler.readUser(template, 6000);
+        if (myUser == null) {
+            System.out.println("Could not acquire myUser!");
+            throw new AcquireTupleException();
+        }
+        return myUser;
+    }
+
+    private void updateMainList() throws Exception {
+        NetworkHandlerSingleton networkHandler = prepareSpaceForAuction();
+
+        AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker(6000);
+        if (auctionTracker == null) {
+            System.out.println("Didn't get the auction tracker!");
+            throw new AcquireTupleException();
+        }
+
+        auctionList.clear();
+        for (String auction : auctionTracker.auctionList) {
+            addEntryToMainAuctionList(auction, "0");
+        }
+    }
+
+    private NetworkHandlerSingleton prepareSpaceForAuction() throws JavaSpaceNotFoundException, TransactionException, RemoteException {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-        networkHandler.setMainController(this);
-
-        ClientDataSingleton clientData = ClientDataSingleton.getInstance();
-
-        updateLists();
-
-        //addLog("Abc", "123");
-        //addLog("Abc", "123");
-
-
+        if (!networkHandler.auctionTrackerExists()) {
+            networkHandler.writeAuctionTracker();
+        }
+        return networkHandler;
     }
 
+    public void addEntryToMyAuctionList(String auctionID, String bidCount) {
+        Text text = new Text();
+        text.setText(auctionID + " (" + bidCount + " lances)");
+        Region spacer = new Region();
+        Button button = new Button();
+        button.setText("Excluir");
+        button.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                try {
+                    NetworkHandlerSingleton.getInstance().deleteAuctionWithID(auctionID);
+                    updateLists();
+                } catch (AcquireTupleException e) {
+                    System.out.println("Couldn't acquire tuple to be deleted!");
+                    e.printStackTrace();
+                }
+            }
+        });
+        HBox box = new HBox();
+        box.setHgrow(spacer, Priority.ALWAYS);
+        box.getChildren().addAll(text, spacer, button);
+        myAuctionsList.add(box);
+        System.out.println("Added entry to my list");
+    }
 
+    private void addEntryToMainAuctionList(String auctionId, String bidCount) {
+        Text text = new Text();
+        text.setText(auctionId + " (" + bidCount + " lances)");
+        Region spacer = new Region();
+        Button button = new Button();
+        button.setText("Visualizar/Adicionar lance");
+        button.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                openDetailsForAuction(auctionId);
+            }
+        });
+        HBox box = new HBox();
+        box.setHgrow(spacer, Priority.ALWAYS);
+        box.getChildren().addAll(text, spacer, button);
+        auctionList.add(box);
+    }
 
+    private void openDetailsForAuction(String auctionID) {
+        ClientDataSingleton.getInstance().setLastClickedID(auctionID);
+        openDetailsWindow();
+    }
+
+    private void openDetailsWindow() {
+        try {
+            Stage primaryStage = new Stage();
+            Parent root = FXMLLoader.load(getClass().getResource("auctionDetails.fxml"));
+            primaryStage.setTitle("Detalhes do lote");
+            primaryStage.setScene(new Scene(root, 800, 500));
+            primaryStage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
 }
