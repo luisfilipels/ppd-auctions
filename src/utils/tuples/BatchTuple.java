@@ -6,20 +6,10 @@ import java.util.HashMap;
 
 public class BatchTuple implements Entry {
 
-    private class Pair {
-        int value;
-        boolean isPublic;
-
-        Pair(int value, boolean isPublic) {
-            this.value = value;
-            this.isPublic = isPublic;
-        }
-    }
-
     public String id;
     public String description;
     public String sellerId;
-    public HashMap<String, Pair> bids = new HashMap<>();
+    public HashMap<String, String> bids = new HashMap<>();    // Key: Creator, Value: "Value|isPublic"
 
     public BatchTuple(){}
 
@@ -27,5 +17,10 @@ public class BatchTuple implements Entry {
         this.id = id;
         this.description = description;
         this.sellerId = sellerId;
+    }
+
+    public void addBid(int value, boolean isPublic) {
+        String bidData = value + "|" + isPublic;
+        bids.put(sellerId, bidData);
     }
 }

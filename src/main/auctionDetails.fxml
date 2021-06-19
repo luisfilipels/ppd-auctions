@@ -80,7 +80,7 @@
       </HBox>
       <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
          <children>
-            <Button mnemonicParsing="false" text="CONFIRMAR" />
+            <Button mnemonicParsing="false" onAction="#confirmButtonClick" text="CONFIRMAR" />
             <Region prefHeight="89.0" prefWidth="49.0" />
             <Button mnemonicParsing="false" text="CANCELAR" />
          </children>
