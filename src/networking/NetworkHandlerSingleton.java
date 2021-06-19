@@ -171,6 +171,7 @@ public class NetworkHandlerSingleton {
         if (javaSpace == null) throw new JavaSpaceNotFoundException();
 
         BatchTuple template = new BatchTuple(id, null, null);
+        template.bids = null;
         return (BatchTuple) javaSpace.take(template, null, 60 * 60 * 1000);
     }
 
@@ -259,6 +260,17 @@ public class NetworkHandlerSingleton {
             removeStringFromList(auctionTracker.auctionList, auctionID);
             writeAuctionTracker(auctionTracker);
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            BatchTuple foundTuple = takeAuctionTuple(auctionID);
+
+            if (foundTuple == null) {
+                throw new Exception();
+            }
+        } catch (Exception e) {
+            System.out.println("Couldn't take tuple!");
             e.printStackTrace();
         }
     }

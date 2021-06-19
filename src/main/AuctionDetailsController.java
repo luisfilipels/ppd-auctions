@@ -2,9 +2,12 @@ package main;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import networking.NetworkHandlerSingleton;
 import utils.ClientDataSingleton;
 import utils.tuples.BatchTuple;
@@ -45,8 +48,19 @@ public class AuctionDetailsController {
         auctionDescriptionText.setText(thisBatch.description);
     }
 
+    private void closeSelfWindow(ActionEvent event) {
+        Node source = (Node) event.getSource();
+        Stage stage = (Stage) source.getScene().getWindow();
+        stage.close();
+    }
+
     @FXML
-    void confirmButtonClick() {
+    void cancelButtonClick(ActionEvent event) {
+        closeSelfWindow(event);
+    }
+
+    @FXML
+    void confirmButtonClick(ActionEvent event) {
         NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
 
         try {
@@ -64,6 +78,7 @@ public class AuctionDetailsController {
                 System.out.println("Didn't write bid!");
             } else {
                 System.out.println("Wrote bid");
+                closeSelfWindow(event);
             }
 
         } catch (Exception e) {

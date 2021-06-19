@@ -82,7 +82,7 @@
          <children>
             <Button mnemonicParsing="false" onAction="#confirmButtonClick" text="CONFIRMAR" />
             <Region prefHeight="89.0" prefWidth="49.0" />
-            <Button mnemonicParsing="false" text="CANCELAR" />
+            <Button mnemonicParsing="false" onAction="#cancelButtonClick" text="CANCELAR" />
          </children>
       </HBox>
    </children>
