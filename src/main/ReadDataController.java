@@ -15,62 +15,62 @@ import utils.exceptions.AcquireTupleException;
 import utils.exceptions.JavaSpaceNotFoundException;
 
 import java.rmi.RemoteException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ReadDataController {
-
-    @FXML
-    private TextField brokerAddressField;
-
-    @FXML
-    private Text invalidIPText;
-
-    @FXML
-    private Text wrongPasswordText;
 
     @FXML
     private TextField userField;
 
     @FXML
-    private TextField passwordField;
-
-    @FXML
     private Text failedConnectionText;
 
-    private static final String PATTERN =
-            "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
-                    "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
-                    "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
-                    "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
-
-    // Got this function from StackOverFlow
-    public static boolean isValid(final String ip){
-        Pattern pattern = Pattern.compile(PATTERN);
-        Matcher matcher = pattern.matcher(ip);
-        return matcher.matches();
-    }
-
-    private String getIp() {
-        String ip = brokerAddressField.getText().trim();
-        if (ip.trim().equals("")) {
-            return "failover://tcp://localhost:61616";
-        } else if(!isValid(ip)) {
-            return "invalid";
-        } else {
-            return "failover://tcp://" + ip + ":61616";
-        }
-    }
-
-    private void createConnectionAndRefreshTopicsWithIP(String ip) {
-
-    }
+    private NetworkHandlerSingleton networkHandler;
 
     @FXML
     public void initialize() {
-        invalidIPText.setOpacity(0);
-        wrongPasswordText.setOpacity(0);
         failedConnectionText.setOpacity(0);
+        networkHandler = NetworkHandlerSingleton.getInstance();
+    }
+
+    @FXML
+    public void onConfirmButton(ActionEvent event) {
+        String userName = userField.getText().trim();
+
+        if (!loginWithUserName(userName)) return;
+        if (!connectToRoom()) return;
+
+        closeSelfWindow(event);
+        openMainWindowWithUserName(userName);
+    }
+
+    private boolean connectToRoom() {
+        try {
+            if (!networkHandler.auctionTrackerExists()) {
+                System.out.println("Auction tracker offline. Creating...");
+                networkHandler.writeAuctionTracker();
+            }
+        } catch (JavaSpaceNotFoundException | TransactionException | RemoteException e) {
+            failedConnectionText.setText("Couldn't connect to auction space!");
+            failedConnectionText.setOpacity(1);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean loginWithUserName(String userName) {
+        try {
+            networkHandler.loginUser(userName);
+        } catch (JavaSpaceNotFoundException e) {
+            failedConnectionText.setText("Couldn't connect to auction space!");
+            failedConnectionText.setOpacity(1);
+            return false;
+        } catch (AcquireTupleException e) {
+            failedConnectionText.setText("Failed to login/register!");
+            failedConnectionText.setOpacity(1);
+            return false;
+        }
+        failedConnectionText.setOpacity(0);
+        return true;
     }
 
     private void closeSelfWindow(ActionEvent event) {
@@ -90,52 +90,6 @@ public class ReadDataController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    @FXML
-    public void onConfirmButton(ActionEvent event) {
-
-        String userName = userField.getText().trim();
-
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-
-        try {
-            networkHandler.loginUser(userName);
-        } catch (JavaSpaceNotFoundException e) {
-            System.out.println("Javaspace not found");
-            failedConnectionText.setOpacity(1);
-            return;
-        } catch (AcquireTupleException e) {
-            System.out.println("Failed to acquire a tuple!");
-            failedConnectionText.setOpacity(1);
-            return;
-        }
-        wrongPasswordText.setOpacity(0);
-        failedConnectionText.setOpacity(0);
-
-
-        try {
-            if (!networkHandler.auctionTrackerExists()) {
-                System.out.println("Auction tracker offline. Creating...");
-                networkHandler.writeAuctionTracker();
-                if (networkHandler.auctionTrackerExists()) {
-                    System.out.println("Auction tracker created.");
-                } else {
-                    System.out.println("Auction tracker wasn't created!");
-                }
-            } else {
-                System.out.println("Auction tracker online");
-            }
-        } catch (JavaSpaceNotFoundException e) {
-            System.out.println("Javaspace not found!");
-            return;
-        } catch (TransactionException | RemoteException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        closeSelfWindow(event);
-        openMainWindowWithUserName(userName);
     }
 
 }
