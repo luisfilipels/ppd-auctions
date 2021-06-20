@@ -1,6 +1,7 @@
 package networking;
 
 import main.MainViewController;
+import net.jini.core.entry.UnusableEntryException;
 import net.jini.core.transaction.TransactionException;
 import net.jini.space.JavaSpace;
 import utils.ClientDataSingleton;
@@ -169,7 +170,9 @@ public class NetworkHandlerSingleton {
         System.out.println("Attempted to write batch");
     }
 
-    public BatchTuple takeAuctionTuple(String id, long timeout) throws Exception {
+    public BatchTuple takeAuctionTuple(String id, long timeout)
+            throws JavaSpaceNotFoundException, UnusableEntryException,
+            TransactionException, RemoteException, InterruptedException {
         javaSpace = getJavaSpace();
         if (javaSpace == null) throw new JavaSpaceNotFoundException();
 
@@ -178,7 +181,9 @@ public class NetworkHandlerSingleton {
         return (BatchTuple) javaSpace.take(template, null, timeout);
     }
 
-    public BatchTuple readAuctionTuple(String auctionID) throws Exception{
+    public BatchTuple readAuctionTuple(String auctionID)
+            throws JavaSpaceNotFoundException, UnusableEntryException,
+            TransactionException, RemoteException, InterruptedException {
         javaSpace = getJavaSpace();
         if (javaSpace == null) throw new JavaSpaceNotFoundException();
 

@@ -8,10 +8,16 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import net.jini.core.entry.UnusableEntryException;
+import net.jini.core.transaction.TransactionException;
 import networking.NetworkHandlerSingleton;
 import utils.ClientDataSingleton;
+import utils.exceptions.AcquireTupleException;
+import utils.exceptions.JavaSpaceNotFoundException;
+import utils.exceptions.WriteTupleException;
 import utils.tuples.BatchTuple;
 
+import java.rmi.RemoteException;
 import java.util.Map;
 
 public class AuctionDetailsController {
@@ -36,16 +42,44 @@ public class AuctionDetailsController {
     private ScrollPane scrollPane;
 
     private String auctionID;
+    private NetworkHandlerSingleton networkHandler;
+    private ClientDataSingleton clientData;
 
-    private void setAuctionDescriptionText() throws Exception{
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
+    @FXML
+    void cancelButtonClick(ActionEvent event) {
+        closeSelfWindow(event);
+    }
 
-        BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
-        if (thisBatch == null) {
-            System.out.println("Couldn't get batch information!");
-            return;
+    @FXML
+    void confirmButtonClick(ActionEvent event) {
+        try {
+            BatchTuple thisBatch = networkHandler.takeAuctionTuple(auctionID, 5000);
+            if (thisBatch == null) {
+                System.out.println("Couldn't get batch information!");
+                return;
+            }
+            int value = Integer.parseInt(bidValueField.getText());
+            boolean isPublic = publicBidCheckBox.isSelected();
+            thisBatch.addBid(ClientDataSingleton.getInstance().userName, value, isPublic);
+            networkHandler.writeAuction(thisBatch);
+
+            if (networkHandler.readAuctionTuple(auctionID) == null) {
+                System.out.println("Didn't write bid!");
+                throw new WriteTupleException();
+            } else {
+                System.out.println("Wrote bid");
+                closeSelfWindow(event);
+            }
+        } catch (UnusableEntryException | TransactionException | RemoteException | InterruptedException e) {
+            // TODO: Show message on UI
+            e.printStackTrace();
+        } catch (JavaSpaceNotFoundException e) {
+            // TODO: Show message on UI
+            e.printStackTrace();
+        } catch (WriteTupleException e) {
+            // TODO: Show message on UI
+            e.printStackTrace();
         }
-        auctionDescriptionText.setText(thisBatch.description);
     }
 
     private void closeSelfWindow(ActionEvent event) {
@@ -55,101 +89,75 @@ public class AuctionDetailsController {
     }
 
     @FXML
-    void cancelButtonClick(ActionEvent event) {
-        closeSelfWindow(event);
-    }
-
-    @FXML
-    void confirmButtonClick(ActionEvent event) {
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-
-        try {
-            BatchTuple thisBatch = networkHandler.takeAuctionTuple(auctionID, 5000);
-            if (thisBatch == null) {
-                System.out.println("Couldn't get batch information!");
-                return;
-            }
-            int value = Integer.parseInt(bidValueField.getText());
-            boolean isPublic = publicBidCheckBox.isSelected();
-            System.out.println("isPublic: " + isPublic);
-            thisBatch.addBid(ClientDataSingleton.getInstance().userName, value, isPublic);
-            networkHandler.writeAuction(thisBatch);
-
-            if (networkHandler.readAuctionTuple(auctionID) == null) {
-                System.out.println("Didn't write bid!");
-            } else {
-                System.out.println("Wrote bid");
-                closeSelfWindow(event);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void updateBids() {
-        NetworkHandlerSingleton networkHandler = NetworkHandlerSingleton.getInstance();
-        ClientDataSingleton clientData = ClientDataSingleton.getInstance();
-        try {
-            BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
-            if (thisBatch == null) {
-                System.out.println("Couldn't get this batch!");
-                return;
-            }
-            if (thisBatch.bids == null) {
-                System.out.println("Bids were null!");
-                return;
-            }
-            for (Map.Entry<String, String> entry : thisBatch.bids.entrySet()) {
-                String[] bidData = entry.getValue().split("\\|");
-                int value = Integer.parseInt(bidData[0]);
-                boolean isPublic = bidData[1].equals("true");
-                System.out.println("isPublic!!!: " + isPublic);
-                String bidCreator = entry.getKey();
-                if (bidCreator.equals(clientData.userName)) {
-                    // I created the bid, so I should absolutely see the bid
-                    System.out.println(1);
-                    if (isPublic) {
-                        bidList.add(new Text("Criador: Você, valor: " + value));
-                    } else {
-                        bidList.add(new Text("Criador: Você (privado), valor: " + value));
-                    }
-                } else {
-                    System.out.println(2);
-                    // I didn't create the bid, so I should only see the bid if I created the
-                    // auction, of if it is public
-                    if (isPublic) {
-                        bidList.add(new Text("Criador: " + bidCreator + ", valor: " + value));
-                    } else {
-                        if (thisBatch.sellerId.equals(clientData.userName)) {
-                            bidList.add(new Text("Criador: " + bidCreator + " (privado), valor: " + value));
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
     public void initialize() {
-        bidList = FXCollections.observableArrayList();
-        bidListView.setItems(bidList);
-
-        ClientDataSingleton clientData = ClientDataSingleton.getInstance();
-        auctionID = clientData.getLastClickedID();
-        auctionIdText.setText(auctionID);
-
-        auctionDescriptionText.wrappingWidthProperty().bind(scrollPane.widthProperty());
+        acquireHandlers();
+        setUpLists();
+        setUpAuctionID();
         try {
             setAuctionDescriptionText();
         } catch (Exception e) {
-            System.out.println("Couldn't set description!");
+            auctionDescriptionText.setText("Não foi possível carregar a descrição!");
             e.printStackTrace();
         }
+        updateBidsList();
+    }
 
-        updateBids();
+    private void acquireHandlers() {
+        networkHandler = NetworkHandlerSingleton.getInstance();
+        clientData = ClientDataSingleton.getInstance();
+    }
+
+    private void setUpAuctionID() {
+        auctionID = clientData.getLastClickedID();
+        auctionIdText.setText(auctionID);
+    }
+
+    private void setUpLists() {
+        bidList = FXCollections.observableArrayList();
+        bidListView.setItems(bidList);
+    }
+
+    private void setAuctionDescriptionText() throws Exception{
+        BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
+        if (thisBatch == null) throw new AcquireTupleException();
+        auctionDescriptionText.wrappingWidthProperty().bind(scrollPane.widthProperty());
+        auctionDescriptionText.setText(thisBatch.description);
+    }
+
+    private void updateBidsList() {
+        try {
+            BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
+            if (thisBatch == null) throw new AcquireTupleException();
+            if (thisBatch.bids == null) throw new NullPointerException();
+            for (Map.Entry<String, String> entry : thisBatch.bids.entrySet()) {
+                addEntryToList(thisBatch, entry);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addEntryToList(BatchTuple thisBatch, Map.Entry<String, String> entry) {
+        String[] bidData = entry.getValue().split("\\|");
+
+        int value = Integer.parseInt(bidData[0]);
+        boolean isPublic = bidData[1].equals("true");
+
+        String bidCreator = entry.getKey();
+        if (bidCreator.equals(clientData.userName)) {
+            // I created the bid, so I should absolutely see the bid
+            bidList.add(new Text("Criador: Você" + getPrivateText(isPublic) + " valor: " + value));
+        } else {
+            // I didn't create the bid, so I should only see the bid if it is public,
+            // or if I created the auction
+            if (isPublic || thisBatch.sellerId.equals(clientData.userName)) {
+                bidList.add(new Text("Criador: " + bidCreator + getPrivateText(isPublic) + " valor: " + value));
+            }
+        }
+    }
+
+    private String getPrivateText(boolean isPublic) {
+        return isPublic ? "," : " (privado),";
     }
 
 
