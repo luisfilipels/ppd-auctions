@@ -23,6 +23,7 @@
             <Line endX="122.0" layoutX="115.0" layoutY="47.0" startX="-100.0" stroke="#aeaeae" />
             <ListView fx:id="auctionListView" layoutX="15.0" layoutY="64.0" prefHeight="368.0" prefWidth="375.0" />
             <Button fx:id="updateListsButtons" layoutX="15.0" layoutY="441.0" mnemonicParsing="false" onAction="#updateViewsButtonClick" text="Atualizar" />
+            <Text fx:id="mainListErrorText" fill="#fdff52" layoutX="14.0" layoutY="61.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Problema atualizando a lista!" />
          </children>
       </Pane>
       <VBox prefHeight="480.0" prefWidth="252.0" HBox.hgrow="ALWAYS">
@@ -55,6 +56,9 @@
                         <Font size="13.0" />
                      </font>
                   </Text>
+                  <Text fx:id="auctionIDErrorText" fill="#fdff52" layoutX="102.0" layoutY="318.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Este campo nao pode estar vazio!" />
+                  <Text fx:id="myListErrorText" fill="#fdff52" layoutX="17.0" layoutY="62.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Problema atualizando a lista!" />
+                  <Text fx:id="auctionCreateErrorText" fill="#fdff52" layoutX="102.0" layoutY="457.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Nao foi possivel criar o lote!" />
                </children>
             </Pane>
          </children>

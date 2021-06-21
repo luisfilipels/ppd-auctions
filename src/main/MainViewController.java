@@ -38,6 +38,18 @@ public class MainViewController {
     @FXML
     private TextArea auctionDescriptionField;
 
+    @FXML
+    private Text mainListErrorText;
+
+    @FXML
+    private Text myListErrorText;
+
+    @FXML
+    private Text auctionIDErrorText;
+    
+    @FXML
+    private Text auctionCreateErrorText;
+
     private NetworkHandlerSingleton networkHandler;
     private ClientDataSingleton clientData;
 
@@ -54,6 +66,14 @@ public class MainViewController {
         }
         setUpLists();
         updateLists();
+        setUpErrors();
+    }
+
+    private void setUpErrors() {
+        auctionIDErrorText.setOpacity(0);
+        mainListErrorText.setOpacity(0);
+        myListErrorText.setOpacity(0);
+        auctionCreateErrorText.setOpacity(0);
     }
 
     private void setUpLists() {
@@ -66,19 +86,36 @@ public class MainViewController {
 
     @FXML
     void createAuctionButtonClick() {
+        if (!inputIsValid()) {
+            auctionIDErrorText.setOpacity(1);
+            return;
+        }
+        auctionIDErrorText.setOpacity(0);
         writeAuction();
         updateLists();
+        auctionIdField.clear();
+        auctionDescriptionField.clear();
+    }
+
+    private boolean inputIsValid() {
+        return !auctionIdField.getText().trim().equals("");
     }
 
     private void writeAuction() {
         try {
             networkHandler.writeAuction(auctionIdField.getText(), auctionDescriptionField.getText(), clientData.userName);
         } catch (WriteTupleException e) {
+            auctionCreateErrorText.setText("Não foi possível escrever os dados remotos!");
+            auctionCreateErrorText.setOpacity(1);
             e.printStackTrace();
+            return;
         } catch (AcquireTupleException e) {
-            System.out.println("Could not acquire tuple when writing auction.");
+            auctionCreateErrorText.setText("Não foi possível ler os dados remotos!");
+            auctionCreateErrorText.setOpacity(1);
             e.printStackTrace();
+            return;
         }
+        auctionCreateErrorText.setOpacity(0);
     }
     
     @FXML
@@ -87,17 +124,32 @@ public class MainViewController {
     }
 
     private void updateLists() {
+        updateMyListUI();
+        updateMainListUI();
+    }
+
+    private void updateMainListUI() {
         try {
-            updateMyList();
             updateMainList();
+            mainListErrorText.setOpacity(0);
         } catch (Exception e) {
-            System.out.println("Couldn't update lists!");
+            mainListErrorText.setOpacity(1);
             e.printStackTrace();
         }
     }
 
-    private void updateMyList() throws Exception{
-        UserTuple myUser = getMyUserWithHandler(networkHandler);
+    private void updateMyListUI() {
+        try {
+            updateMyList();
+            myListErrorText.setOpacity(0);
+        } catch (Exception e) {
+            myListErrorText.setOpacity(1);
+            e.printStackTrace();
+        }
+    }
+
+    private void updateMyList() throws AcquireTupleException {
+        UserTuple myUser = networkHandler.getMyUserWithHandler(networkHandler);
 
         myAuctionsList.clear();
         for (String auction : myUser.madeAuctions) {
@@ -105,27 +157,15 @@ public class MainViewController {
         }
     }
 
-    private UserTuple getMyUserWithHandler(NetworkHandlerSingleton networkHandler) throws AcquireTupleException {
-        UserTuple template = new UserTuple();
-        template.userID = ClientDataSingleton.getInstance().userName;
-        UserTuple myUser = networkHandler.readUser(template, 6000);
-        if (myUser == null) {
-            System.out.println("Could not acquire myUser!");
-            throw new AcquireTupleException();
-        }
-        return myUser;
-    }
-
-    private void updateMainList() throws Exception {
+    private void updateMainList() throws AcquireTupleException {
         AuctionTrackerTuple auctionTracker = networkHandler.readAuctionTracker(6000);
         if (auctionTracker == null) {
             System.out.println("Didn't get the auction tracker!");
             throw new AcquireTupleException();
         }
-
         auctionList.clear();
         for (String auction : auctionTracker.auctionList) {
-            addEntryToMainAuctionList(auction, "0");
+            addEntryToMainAuctionList(auction);
         }
     }
 
@@ -159,9 +199,9 @@ public class MainViewController {
         System.out.println("Added entry to my list");
     }
 
-    private void addEntryToMainAuctionList(String auctionId, String bidCount) {
+    private void addEntryToMainAuctionList(String auctionId) {
         Text text = new Text();
-        text.setText(auctionId + " (" + bidCount + " lances)");
+        text.setText(auctionId);
         Region spacer = new Region();
         Button button = new Button();
         button.setText("Visualizar/Adicionar lance");

@@ -53,6 +53,17 @@ public class NetworkHandlerSingleton {
         }
     }
 
+    public UserTuple getMyUserWithHandler(NetworkHandlerSingleton networkHandler) throws AcquireTupleException {
+        UserTuple template = new UserTuple();
+        template.userID = ClientDataSingleton.getInstance().userName;
+        UserTuple myUser = networkHandler.readUser(template, 6000);
+        if (myUser == null) {
+            System.out.println("Could not acquire myUser!");
+            throw new AcquireTupleException();
+        }
+        return myUser;
+    }
+
     private void updateUserWithNewAuction(String id) throws AcquireTupleException, WriteTupleException {
         ClientDataSingleton clientData = ClientDataSingleton.getInstance();
         UserTuple template = new UserTuple(clientData.userName);
