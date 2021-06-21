@@ -37,6 +37,9 @@ public class AuctionDetailsController {
     @FXML
     private ScrollPane scrollPane;
 
+    @FXML
+    private Text auctionCreatorText;
+
     private String auctionID;
     private NetworkHandlerSingleton networkHandler;
     private ClientDataSingleton clientData;
@@ -86,6 +89,7 @@ public class AuctionDetailsController {
         acquireHandlers();
         setUpLists();
         setUpAuctionID();
+        setUpAuctionCreatorName();
         try {
             setAuctionDescriptionText();
         } catch (Exception e) {
@@ -103,6 +107,19 @@ public class AuctionDetailsController {
     private void setUpAuctionID() {
         auctionID = clientData.getLastClickedID();
         auctionIdText.setText(auctionID);
+    }
+
+    private void setUpAuctionCreatorName() {
+        try {
+            BatchTuple thisBatch = networkHandler.readAuction(clientData.getLastClickedID());
+            if (thisBatch.sellerId.equals(clientData.userName)) {
+                auctionCreatorText.setText(thisBatch.sellerId + " (Você)");
+            } else {
+                auctionCreatorText.setText(thisBatch.sellerId);
+            }
+        } catch (AcquireTupleException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setUpLists() {
