@@ -8,16 +8,12 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import net.jini.core.entry.UnusableEntryException;
-import net.jini.core.transaction.TransactionException;
 import networking.NetworkHandlerSingleton;
 import utils.ClientDataSingleton;
 import utils.exceptions.AcquireTupleException;
-import utils.exceptions.JavaSpaceNotFoundException;
 import utils.exceptions.WriteTupleException;
 import utils.tuples.BatchTuple;
 
-import java.rmi.RemoteException;
 import java.util.Map;
 
 public class AuctionDetailsController {
@@ -63,17 +59,14 @@ public class AuctionDetailsController {
             thisBatch.addBid(ClientDataSingleton.getInstance().userName, value, isPublic);
             networkHandler.writeAuction(thisBatch);
 
-            if (networkHandler.readAuctionTuple(auctionID) == null) {
+            if (networkHandler.readAuction(auctionID) == null) {
                 System.out.println("Didn't write bid!");
                 throw new WriteTupleException();
             } else {
                 System.out.println("Wrote bid");
                 closeSelfWindow(event);
             }
-        } catch (UnusableEntryException | TransactionException | RemoteException | InterruptedException e) {
-            // TODO: Show message on UI
-            e.printStackTrace();
-        } catch (JavaSpaceNotFoundException e) {
+        } catch (AcquireTupleException e) {
             // TODO: Show message on UI
             e.printStackTrace();
         } catch (WriteTupleException e) {
@@ -118,7 +111,7 @@ public class AuctionDetailsController {
     }
 
     private void setAuctionDescriptionText() throws Exception{
-        BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
+        BatchTuple thisBatch = networkHandler.readAuction(auctionID);
         if (thisBatch == null) throw new AcquireTupleException();
         auctionDescriptionText.wrappingWidthProperty().bind(scrollPane.widthProperty());
         auctionDescriptionText.setText(thisBatch.description);
@@ -126,7 +119,7 @@ public class AuctionDetailsController {
 
     private void updateBidsList() {
         try {
-            BatchTuple thisBatch = networkHandler.readAuctionTuple(auctionID);
+            BatchTuple thisBatch = networkHandler.readAuction(auctionID);
             if (thisBatch == null) throw new AcquireTupleException();
             if (thisBatch.bids == null) throw new NullPointerException();
             for (Map.Entry<String, String> entry : thisBatch.bids.entrySet()) {

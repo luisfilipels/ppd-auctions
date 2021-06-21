@@ -9,7 +9,7 @@ public class BatchTuple implements Entry {
     public String id;
     public String description;
     public String sellerId;
-    public HashMap<String, String> bids = new HashMap<>();    // Key: Creator, Value: "Value|isPublic"
+    public HashMap<String, String> bids = new HashMap<>();
 
     public BatchTuple(){}
 
@@ -17,6 +17,14 @@ public class BatchTuple implements Entry {
         this.id = id;
         this.description = description;
         this.sellerId = sellerId;
+        bids = new HashMap<>();
+    }
+
+    public BatchTuple(String id, String description, String sellerId, HashMap<String, String> bids) {
+        this.id = id;
+        this.description = description;
+        this.sellerId = sellerId;
+        this.bids = bids;
     }
 
     public void addBid(String creator, int value, boolean isPublic) {

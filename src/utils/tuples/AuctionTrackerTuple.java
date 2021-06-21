@@ -8,7 +8,7 @@ import java.util.List;
 
 public class AuctionTrackerTuple implements Entry {
 
-    public List<String> auctionList; // Key: ID, Value: Creator (null for public)
+    public List<String> auctionList;
 
     public AuctionTrackerTuple() {}
 

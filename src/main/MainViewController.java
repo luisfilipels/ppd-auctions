@@ -2,13 +2,11 @@ package main;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.fxml.FXML;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -18,7 +16,7 @@ import net.jini.core.transaction.TransactionException;
 import networking.NetworkHandlerSingleton;
 import utils.ClientDataSingleton;
 import utils.exceptions.AcquireTupleException;
-import utils.exceptions.JavaSpaceNotFoundException;
+import utils.exceptions.WriteTupleException;
 import utils.tuples.AuctionTrackerTuple;
 import utils.tuples.UserTuple;
 
@@ -75,7 +73,7 @@ public class MainViewController {
     private void writeAuction() {
         try {
             networkHandler.writeAuction(auctionIdField.getText(), auctionDescriptionField.getText(), clientData.userName);
-        } catch (JavaSpaceNotFoundException | TransactionException | RemoteException e) {
+        } catch (WriteTupleException e) {
             e.printStackTrace();
         } catch (AcquireTupleException e) {
             System.out.println("Could not acquire tuple when writing auction.");
@@ -131,7 +129,7 @@ public class MainViewController {
         }
     }
 
-    private void prepareSpaceForAuction() throws JavaSpaceNotFoundException, TransactionException, RemoteException {
+    private void prepareSpaceForAuction() throws WriteTupleException, AcquireTupleException {
         if (!networkHandler.auctionTrackerExists()) {
             networkHandler.writeAuctionTracker();
         }
@@ -150,6 +148,8 @@ public class MainViewController {
             } catch (AcquireTupleException e) {
                 System.out.println("Couldn't acquire tuple to be deleted!");
                 e.printStackTrace();
+            } catch (WriteTupleException e) {
+                e.printStackTrace(); // TODO: Review this
             }
         });
         HBox box = new HBox();

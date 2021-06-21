@@ -11,4 +11,8 @@ public class UserTuple implements Entry {
     public List<String> madeAuctions;
 
     public UserTuple() {}
+
+    public UserTuple(String userID) {
+        this.userID = userID;
+    }
 }

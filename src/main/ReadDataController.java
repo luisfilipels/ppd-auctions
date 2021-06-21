@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import net.jini.core.transaction.TransactionException;
 import networking.NetworkHandlerSingleton;
 import utils.exceptions.AcquireTupleException;
-import utils.exceptions.JavaSpaceNotFoundException;
+import utils.exceptions.WriteTupleException;
 
 import java.rmi.RemoteException;
 
@@ -49,8 +49,12 @@ public class ReadDataController {
                 System.out.println("Auction tracker offline. Creating...");
                 networkHandler.writeAuctionTracker();
             }
-        } catch (JavaSpaceNotFoundException | TransactionException | RemoteException e) {
+        } catch (AcquireTupleException e) {
             failedConnectionText.setText("Couldn't connect to auction space!");
+            failedConnectionText.setOpacity(1);
+            return false;
+        } catch (WriteTupleException e) {
+            failedConnectionText.setText("Couldn't write data in auction space!");
             failedConnectionText.setOpacity(1);
             return false;
         }
@@ -60,12 +64,12 @@ public class ReadDataController {
     private boolean loginWithUserName(String userName) {
         try {
             networkHandler.loginUser(userName);
-        } catch (JavaSpaceNotFoundException e) {
-            failedConnectionText.setText("Couldn't connect to auction space!");
-            failedConnectionText.setOpacity(1);
-            return false;
         } catch (AcquireTupleException e) {
             failedConnectionText.setText("Failed to login/register!");
+            failedConnectionText.setOpacity(1);
+            return false;
+        } catch (WriteTupleException e) {
+            failedConnectionText.setText("Failed to write data!");
             failedConnectionText.setOpacity(1);
             return false;
         }
