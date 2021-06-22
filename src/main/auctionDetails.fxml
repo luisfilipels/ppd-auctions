@@ -70,11 +70,16 @@
                   <Insets left="20.0" top="10.0" />
                </HBox.margin>
             </Text>
-            <TextField fx:id="bidValueField" prefHeight="25.0" prefWidth="221.0">
+            <TextField fx:id="bidValueField" prefHeight="25.0" prefWidth="97.0">
                <HBox.margin>
                   <Insets left="10.0" top="5.0" />
                </HBox.margin>
             </TextField>
+            <Text fx:id="invalidBidErrorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="Valor invalido!">
+               <HBox.margin>
+                  <Insets left="5.0" top="10.0" />
+               </HBox.margin>
+            </Text>
          </children>
       </HBox>
       <HBox prefHeight="45.0" prefWidth="600.0">
@@ -89,6 +94,11 @@
                   <Insets bottom="5.0" left="5.0" right="5.0" top="10.0" />
                </HBox.margin>
             </CheckBox>
+            <Text fx:id="connectionIssueErrorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="Problema ao enviar dados!">
+               <HBox.margin>
+                  <Insets left="20.0" top="10.0" />
+               </HBox.margin>
+            </Text>
          </children>
       </HBox>
       <HBox alignment="CENTER" prefHeight="47.0" prefWidth="351.0">

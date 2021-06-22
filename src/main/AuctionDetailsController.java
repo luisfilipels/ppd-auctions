@@ -40,6 +40,12 @@ public class AuctionDetailsController {
     @FXML
     private Text auctionCreatorText;
 
+    @FXML
+    private Text invalidBidErrorText;
+
+    @FXML
+    private Text connectionIssueErrorText;
+
     private String auctionID;
     private NetworkHandlerSingleton networkHandler;
     private ClientDataSingleton clientData;
@@ -52,30 +58,37 @@ public class AuctionDetailsController {
     @FXML
     void confirmButtonClick(ActionEvent event) {
         try {
-            BatchTuple thisBatch = networkHandler.takeAuctionTuple(auctionID, 5000);
-            if (thisBatch == null) {
-                System.out.println("Couldn't get batch information!");
-                return;
-            }
-            int value = Integer.parseInt(bidValueField.getText());
-            boolean isPublic = publicBidCheckBox.isSelected();
-            thisBatch.addBid(ClientDataSingleton.getInstance().userName, value, isPublic);
-            networkHandler.writeAuction(thisBatch);
-
-            if (networkHandler.readAuction(auctionID) == null) {
-                System.out.println("Didn't write bid!");
-                throw new WriteTupleException();
-            } else {
-                System.out.println("Wrote bid");
-                closeSelfWindow(event);
-            }
+            if (!createAuction()) return;
+            closeSelfWindow(event);
         } catch (AcquireTupleException e) {
-            // TODO: Show message on UI
+            showConnectionError("Problema ao receber dados!");
             e.printStackTrace();
         } catch (WriteTupleException e) {
-            // TODO: Show message on UI
+            showConnectionError("Problema ao enviar dados!");
             e.printStackTrace();
+        } catch (NumberFormatException e) {
+            invalidBidErrorText.setOpacity(1);
         }
+    }
+
+    private void showConnectionError(String s) {
+        connectionIssueErrorText.setText(s);
+        connectionIssueErrorText.setOpacity(1);
+    }
+
+    private boolean createAuction() throws AcquireTupleException, WriteTupleException {
+        int value = Integer.parseInt(bidValueField.getText());
+        if (value <= 0) throw new NumberFormatException();
+        invalidBidErrorText.setOpacity(0);
+        boolean isPublic = publicBidCheckBox.isSelected();
+        BatchTuple thisBatch = networkHandler.takeAuctionTuple(auctionID, 5000);
+        if (thisBatch == null) {
+            System.out.println("Couldn't get batch information!");
+            return false;
+        }
+        thisBatch.addBid(ClientDataSingleton.getInstance().userName, value, isPublic);
+        networkHandler.writeAuction(thisBatch);
+        return true;
     }
 
     private void closeSelfWindow(ActionEvent event) {
@@ -90,6 +103,7 @@ public class AuctionDetailsController {
         setUpLists();
         setUpAuctionID();
         setUpAuctionCreatorName();
+        setUpErrorTexts();
         try {
             setAuctionDescriptionText();
         } catch (Exception e) {
@@ -97,6 +111,11 @@ public class AuctionDetailsController {
             e.printStackTrace();
         }
         updateBidsList();
+    }
+
+    private void setUpErrorTexts() {
+        invalidBidErrorText.setOpacity(0);
+        connectionIssueErrorText.setOpacity(0);
     }
 
     private void acquireHandlers() {
